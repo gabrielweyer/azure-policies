@@ -1,0 +1,13 @@
+# EditorConfig is awesome: https://EditorConfig.org
+
+root = true
+
+[*]
+end_of_line = lf
+insert_final_newline = true
+
+[*.json]
+indent_size = 2
+
+[*.bicep]
+indent_size = 2

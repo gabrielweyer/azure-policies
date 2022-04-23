@@ -57,3 +57,36 @@ resource appDomainTagResourceGroupPolicy 'Microsoft.Authorization/policyDefiniti
     }
   }
 }
+
+var tagsInitiativeName = '19957755-223d-43c0-aab5-e42b707769ff'
+resource tagsInitiative 'Microsoft.Authorization/policySetDefinitions@2021-06-01' = {
+  name: tagsInitiativeName
+  properties: {
+    description: 'Applies to both resource and resource groups.'
+    displayName: 'Audit \'AppDomain\' tag'
+    metadata: {
+      category: 'Tags'
+      version: '0.0.1'
+    }
+    parameters: {}
+    policyDefinitionGroups: [
+    ]
+    policyDefinitions: [
+      {
+        groupNames: [
+        ]
+        parameters: {}
+        policyDefinitionId: appDomainTagResourcePolicy.id
+        policyDefinitionReferenceId: appDomainTagResourcePolicy.id
+      }
+      {
+        groupNames: [
+        ]
+        parameters: {}
+        policyDefinitionId: appDomainTagResourceGroupPolicy.id
+        policyDefinitionReferenceId: appDomainTagResourceGroupPolicy.id
+      }
+    ]
+    policyType: 'Custom'
+  }
+}

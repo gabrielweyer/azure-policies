@@ -90,3 +90,31 @@ resource tagsInitiative 'Microsoft.Authorization/policySetDefinitions@2021-06-01
     policyType: 'Custom'
   }
 }
+
+var tagsInitiativeAssignmentName = '3561d44c-c518-47e1-bec1-482368fbdc16'
+resource tagsInitiativeAssignment 'Microsoft.Authorization/policyAssignments@2021-06-01' = {
+  name: tagsInitiativeAssignmentName
+  properties: {
+    description: 'Audit missing or required tags for subscription'
+    displayName: 'Audit tags (subscription: ${subscription().subscriptionId})'
+    enforcementMode: 'Default'
+    metadata: {
+      category: 'Tags'
+      version: '0.0.1'
+    }
+    nonComplianceMessages: [
+      {
+        message: 'The resource does not have the expected \'AppDomain\' tag.'
+        policyDefinitionReferenceId: appDomainTagResourcePolicy.id
+      }
+      {
+        message: 'The resource group does not have the expected \'AppDomain\' tag.'
+        policyDefinitionReferenceId: appDomainTagResourceGroupPolicy.id
+      }
+    ]
+    notScopes: [
+    ]
+    parameters: {}
+    policyDefinitionId: tagsInitiative.id
+  }
+}

@@ -6,6 +6,13 @@
 ])
 param environmentType string
 
+@description('The organisation this subscription is used for.')
+@allowed([
+  'Contoso'
+  'TailwindTraders'
+])
+param organisation string
+
 targetScope = 'subscription'
 
 var appDomainTagResourcePolicyName = '25a51682-b81c-4c1e-939c-8d94d998b958'
@@ -124,6 +131,64 @@ resource environmentTagResourceGroupPolicy 'Microsoft.Authorization/policyDefini
   }
 }
 
+var organisationTagResourcePolicyName = 'afe09846-6fc2-4d12-ae37-8feaf0bc6be5'
+resource organisationTagResourcePolicy 'Microsoft.Authorization/policyDefinitions@2021-06-01' = {
+  name: organisationTagResourcePolicyName
+  properties: {
+    policyType: 'Custom'
+    mode: 'Indexed'
+    description: 'The value should match the subscription name. Applies to resources.'
+    displayName: 'Audit \'Organisation\' tag with a value of \'${organisation}\' (resource)'
+    metadata: {
+      category: 'Tags'
+      version: '0.0.1'
+    }
+    parameters: {}
+    policyRule: {
+      if: {
+        field: 'tags[\'Organisation\']'
+        notEquals: organisation
+      }
+      then: {
+        effect: 'Audit'
+      }
+    }
+  }
+}
+
+var organisationTagResourceGroupPolicyName = '36eaf862-d2a5-4c23-a6e1-3641d89eaf9c'
+resource organisationTagResourceGroupPolicy 'Microsoft.Authorization/policyDefinitions@2021-06-01' = {
+  name: organisationTagResourceGroupPolicyName
+  properties: {
+    policyType: 'Custom'
+    mode: 'All'
+    description: 'The value should match the subscription name. Applies to resource groups.'
+    displayName: 'Audit \'Organisation\' tag with a value of \'${organisation}\' (resource group)'
+    metadata: {
+      category: 'Tags'
+      version: '0.0.1'
+    }
+    parameters: {}
+    policyRule: {
+      if: {
+        allOf: [
+          {
+            field: 'type'
+            equals: 'Microsoft.Resources/subscriptions/resourceGroups'
+          }
+          {
+            field: 'tags[\'Organisation\']'
+            notEquals: organisation
+          }
+        ]
+      }
+      then: {
+        effect: 'Audit'
+      }
+    }
+  }
+}
+
 var ownerTagResourcePolicyName = 'f3927374-6b04-431e-a535-4bf83a164c37'
 resource ownerTagResourcePolicy 'Microsoft.Authorization/policyDefinitions@2021-06-01' = {
   name: ownerTagResourcePolicyName
@@ -186,8 +251,8 @@ var tagsInitiativeName = '19957755-223d-43c0-aab5-e42b707769ff'
 resource tagsInitiative 'Microsoft.Authorization/policySetDefinitions@2021-06-01' = {
   name: tagsInitiativeName
   properties: {
-    description: 'The \'Environment\' has to match the subscription name. Applies to both resources and resource groups.'
-    displayName: 'Audit \'AppDomain\', \'Environment\', and \'Owner\' tags'
+    description: 'The \'Organisation\' and \'Environment\' have to match the subscription name (${organisation} ${environmentType}). Applies to both resources and resource groups.'
+    displayName: 'Audit \'AppDomain\', \'Environment\', \'Organisation\', and \'Owner\' tags'
     metadata: {
       category: 'Tags'
       version: '0.0.1'
@@ -223,6 +288,20 @@ resource tagsInitiative 'Microsoft.Authorization/policySetDefinitions@2021-06-01
         parameters: {}
         policyDefinitionId: environmentTagResourceGroupPolicy.id
         policyDefinitionReferenceId: environmentTagResourceGroupPolicy.id
+      }
+      {
+        groupNames: [
+        ]
+        parameters: {}
+        policyDefinitionId: organisationTagResourcePolicy.id
+        policyDefinitionReferenceId: organisationTagResourcePolicy.id
+      }
+      {
+        groupNames: [
+        ]
+        parameters: {}
+        policyDefinitionId: organisationTagResourceGroupPolicy.id
+        policyDefinitionReferenceId: organisationTagResourceGroupPolicy.id
       }
       {
         groupNames: [
@@ -264,12 +343,20 @@ resource tagsInitiativeAssignment 'Microsoft.Authorization/policyAssignments@202
         policyDefinitionReferenceId: appDomainTagResourceGroupPolicy.id
       }
       {
-        message: 'The resource does not have the expected \'Environment\' tag.'
+        message: 'The resource does not have the expected \'Environment\': \'${environmentType}\' tag.'
         policyDefinitionReferenceId: environmentTagResourcePolicy.id
       }
       {
-        message: 'The resource group does not have the expected \'Environment\' tag.'
+        message: 'The resource group does not have the expected \'Environment\': \'${environmentType}\' tag.'
         policyDefinitionReferenceId: environmentTagResourceGroupPolicy.id
+      }
+      {
+        message: 'The resource does not have the expected \'Organisation\': \'${organisation}\' tag.'
+        policyDefinitionReferenceId: organisationTagResourcePolicy.id
+      }
+      {
+        message: 'The resource group does not have the expected \'Organisation\': \'${organisation}\' tag.'
+        policyDefinitionReferenceId: organisationTagResourceGroupPolicy.id
       }
       {
         message: 'The resource does not have the expected \'Owner\' tag.'

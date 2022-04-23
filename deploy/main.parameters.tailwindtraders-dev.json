@@ -4,6 +4,9 @@
   "parameters": {
     "environmentType": {
       "value": "DEV"
+    },
+    "organisation": {
+      "value": "TailwindTraders"
     }
   }
 }

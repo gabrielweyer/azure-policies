@@ -1,8 +1,9 @@
 # Azure policies
 
-These policies will mark a resource as non-compliant when a required tag is missing. I'm auditing the below tags:
+These policies will mark a resource as non-compliant when a required tag is missing or the tag value is invalid. I'm auditing the below tags:
 
 - `AppDomain` expected to contain the name of the service
+- `Environment` expected to be either `DEV`, `UAT`, or `PROD`
 - `Owner` expected to contain the email address of the team supporting the service
 
 ## Deployment
@@ -10,7 +11,7 @@ These policies will mark a resource as non-compliant when a required tag is miss
 Using the Azure CLI:
 
 ```powershell
-az deployment sub create --location australiaeast --template-file ./deploy/main.bicep --name "tagpolicies-$((Get-Date).ToString('yyMMdd-HHmmss'))-$((New-Guid).Guid.Substring(0, 4))"
+az deployment sub create --location australiaeast --template-file ./deploy/main.bicep --parameters @deploy/main.parameters.dev.json --name "tagpolicies-$((Get-Date).ToString('yyMMdd-HHmmss'))-$((New-Guid).Guid.Substring(0, 4))"
 ```
 
 ## Design considerations

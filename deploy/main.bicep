@@ -1,3 +1,11 @@
+@description('The environment this subscription is used for.')
+@allowed([
+  'DEV'
+  'UAT'
+  'PROD'
+])
+param environmentType string
+
 targetScope = 'subscription'
 
 var appDomainTagResourcePolicyName = '25a51682-b81c-4c1e-939c-8d94d998b958'
@@ -48,6 +56,64 @@ resource appDomainTagResourceGroupPolicy 'Microsoft.Authorization/policyDefiniti
           {
             field: 'tags[\'AppDomain\']'
             exists: false
+          }
+        ]
+      }
+      then: {
+        effect: 'Audit'
+      }
+    }
+  }
+}
+
+var environmentTagResourcePolicyName = 'c1da789b-6a17-4235-a686-0c7a58aa46bc'
+resource environmentTagResourcePolicy 'Microsoft.Authorization/policyDefinitions@2021-06-01' = {
+  name: environmentTagResourcePolicyName
+  properties: {
+    policyType: 'Custom'
+    mode: 'Indexed'
+    description: 'The value should match the subscription name. Applies to resources.'
+    displayName: 'Audit \'Environment\' tag with a value of \'${environmentType}\' (resource)'
+    metadata: {
+      category: 'Tags'
+      version: '0.0.1'
+    }
+    parameters: {}
+    policyRule: {
+      if: {
+        field: 'tags[\'Environment\']'
+        notEquals: environmentType
+      }
+      then: {
+        effect: 'Audit'
+      }
+    }
+  }
+}
+
+var environmentTagResourceGroupPolicyName = '8844241b-0eb8-4551-8742-1713ac8fc56f'
+resource environmentTagResourceGroupPolicy 'Microsoft.Authorization/policyDefinitions@2021-06-01' = {
+  name: environmentTagResourceGroupPolicyName
+  properties: {
+    policyType: 'Custom'
+    mode: 'All'
+    description: 'The value should match the subscription name. Applies to resource groups.'
+    displayName: 'Audit \'Environment\' tag with a value of \'${environmentType}\' (resource group)'
+    metadata: {
+      category: 'Tags'
+      version: '0.0.1'
+    }
+    parameters: {}
+    policyRule: {
+      if: {
+        allOf: [
+          {
+            field: 'type'
+            equals: 'Microsoft.Resources/subscriptions/resourceGroups'
+          }
+          {
+            field: 'tags[\'Environment\']'
+            notEquals: environmentType
           }
         ]
       }
@@ -120,8 +186,8 @@ var tagsInitiativeName = '19957755-223d-43c0-aab5-e42b707769ff'
 resource tagsInitiative 'Microsoft.Authorization/policySetDefinitions@2021-06-01' = {
   name: tagsInitiativeName
   properties: {
-    description: 'Applies to both resources and resource groups.'
-    displayName: 'Audit \'AppDomain\' and \'Owner\' tags'
+    description: 'The \'Environment\' has to match the subscription name. Applies to both resources and resource groups.'
+    displayName: 'Audit \'AppDomain\', \'Environment\', and \'Owner\' tags'
     metadata: {
       category: 'Tags'
       version: '0.0.1'
@@ -148,6 +214,20 @@ resource tagsInitiative 'Microsoft.Authorization/policySetDefinitions@2021-06-01
         groupNames: [
         ]
         parameters: {}
+        policyDefinitionId: environmentTagResourcePolicy.id
+        policyDefinitionReferenceId: environmentTagResourcePolicy.id
+      }
+      {
+        groupNames: [
+        ]
+        parameters: {}
+        policyDefinitionId: environmentTagResourceGroupPolicy.id
+        policyDefinitionReferenceId: environmentTagResourceGroupPolicy.id
+      }
+      {
+        groupNames: [
+        ]
+        parameters: {}
         policyDefinitionId: ownerTagResourcePolicy.id
         policyDefinitionReferenceId: ownerTagResourcePolicy.id
       }
@@ -167,7 +247,7 @@ var tagsInitiativeAssignmentName = '3561d44c-c518-47e1-bec1-482368fbdc16'
 resource tagsInitiativeAssignment 'Microsoft.Authorization/policyAssignments@2021-06-01' = {
   name: tagsInitiativeAssignmentName
   properties: {
-    description: 'Audit missing or required tags for subscription'
+    description: 'Audit missing or invalid tags for ${environmentType} subscription'
     displayName: 'Audit tags (subscription: ${subscription().subscriptionId})'
     enforcementMode: 'Default'
     metadata: {
@@ -182,6 +262,14 @@ resource tagsInitiativeAssignment 'Microsoft.Authorization/policyAssignments@202
       {
         message: 'The resource group does not have the expected \'AppDomain\' tag.'
         policyDefinitionReferenceId: appDomainTagResourceGroupPolicy.id
+      }
+      {
+        message: 'The resource does not have the expected \'Environment\' tag.'
+        policyDefinitionReferenceId: environmentTagResourcePolicy.id
+      }
+      {
+        message: 'The resource group does not have the expected \'Environment\' tag.'
+        policyDefinitionReferenceId: environmentTagResourceGroupPolicy.id
       }
       {
         message: 'The resource does not have the expected \'Owner\' tag.'

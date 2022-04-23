@@ -131,6 +131,73 @@ resource environmentTagResourceGroupPolicy 'Microsoft.Authorization/policyDefini
   }
 }
 
+var allowedLocations = [
+  'AU'
+  'NZ'
+  'ALL'
+]
+var locationTagResourcePolicyName = 'a32c70d3-8a14-4a9e-ad01-a58632e4b2ed'
+resource locationTagResourcePolicy 'Microsoft.Authorization/policyDefinitions@2021-06-01' = {
+  name: locationTagResourcePolicyName
+  properties: {
+    policyType: 'Custom'
+    mode: 'Indexed'
+    description: 'Specifies whether the service is dedicated to Australia, New Zealand or serves both. Applies to resources.'
+    displayName: 'Audit \'Location\' tag with a value in ${allowedLocations} (resource)'
+    metadata: {
+      category: 'Tags'
+      version: '0.0.1'
+    }
+    parameters: {}
+    policyRule: {
+      if: {
+        not: {
+          field: 'tags[\'Location\']'
+          in: allowedLocations
+        }
+      }
+      then: {
+        effect: 'Audit'
+      }
+    }
+  }
+}
+
+var locationTagResourceGroupPolicyName = 'dbd58f31-bdbd-4bac-b706-0a134fe66f55'
+resource locationTagResourceGroupPolicy 'Microsoft.Authorization/policyDefinitions@2021-06-01' = {
+  name: locationTagResourceGroupPolicyName
+  properties: {
+    policyType: 'Custom'
+    mode: 'All'
+    description: 'Specifies whether the service is dedicated to Australia, New Zealand or serves both. Applies to resource groups.'
+    displayName: 'Audit \'Location\' tag with a value in ${allowedLocations} (resource group)'
+    metadata: {
+      category: 'Tags'
+      version: '0.0.1'
+    }
+    parameters: {}
+    policyRule: {
+      if: {
+        allOf: [
+          {
+            field: 'type'
+            equals: 'Microsoft.Resources/subscriptions/resourceGroups'
+          }
+          {
+            not: {
+              field: 'tags[\'Location\']'
+              in: allowedLocations
+            }
+          }
+        ]
+      }
+      then: {
+        effect: 'Audit'
+      }
+    }
+  }
+}
+
 var organisationTagResourcePolicyName = 'afe09846-6fc2-4d12-ae37-8feaf0bc6be5'
 resource organisationTagResourcePolicy 'Microsoft.Authorization/policyDefinitions@2021-06-01' = {
   name: organisationTagResourcePolicyName
@@ -251,8 +318,8 @@ var tagsInitiativeName = '19957755-223d-43c0-aab5-e42b707769ff'
 resource tagsInitiative 'Microsoft.Authorization/policySetDefinitions@2021-06-01' = {
   name: tagsInitiativeName
   properties: {
-    description: 'The \'Organisation\' and \'Environment\' have to match the subscription name (${organisation} ${environmentType}). Applies to both resources and resource groups.'
-    displayName: 'Audit \'AppDomain\', \'Environment\', \'Organisation\', and \'Owner\' tags'
+    description: 'The \'Organisation\' and \'Environment\' have to match the subscription name (${organisation} ${environmentType}). The \'Location\' has to be in ${allowedLocations}. Applies to both resources and resource groups.'
+    displayName: 'Audit \'AppDomain\', \'Environment\', \'Location\', \'Organisation\', and \'Owner\' tags'
     metadata: {
       category: 'Tags'
       version: '0.0.1'
@@ -288,6 +355,20 @@ resource tagsInitiative 'Microsoft.Authorization/policySetDefinitions@2021-06-01
         parameters: {}
         policyDefinitionId: environmentTagResourceGroupPolicy.id
         policyDefinitionReferenceId: environmentTagResourceGroupPolicy.id
+      }
+      {
+        groupNames: [
+        ]
+        parameters: {}
+        policyDefinitionId: locationTagResourcePolicy.id
+        policyDefinitionReferenceId: locationTagResourcePolicy.id
+      }
+      {
+        groupNames: [
+        ]
+        parameters: {}
+        policyDefinitionId: locationTagResourceGroupPolicy.id
+        policyDefinitionReferenceId: locationTagResourceGroupPolicy.id
       }
       {
         groupNames: [
@@ -349,6 +430,14 @@ resource tagsInitiativeAssignment 'Microsoft.Authorization/policyAssignments@202
       {
         message: 'The resource group does not have the expected \'Environment\': \'${environmentType}\' tag.'
         policyDefinitionReferenceId: environmentTagResourceGroupPolicy.id
+      }
+      {
+        message: 'The resource does not have the expected \'Location\' tag with a value in \'${allowedLocations}\'.'
+        policyDefinitionReferenceId: locationTagResourcePolicy.id
+      }
+      {
+        message: 'The resource group does not have the expected \'Location\' tag with a value in \'${allowedLocations}\'.'
+        policyDefinitionReferenceId: locationTagResourceGroupPolicy.id
       }
       {
         message: 'The resource does not have the expected \'Organisation\': \'${organisation}\' tag.'

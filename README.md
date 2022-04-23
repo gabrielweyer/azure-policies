@@ -3,6 +3,7 @@
 These policies will mark a resource as non-compliant when a required tag is missing. I'm auditing the below tags:
 
 - `AppDomain` expected to contain the name of the service
+- `Owner` expected to contain the email address of the team supporting the service
 
 ## Deployment
 

@@ -17,7 +17,7 @@ Once the resources are tagged as expected we can define budgets for each `AppDom
 Deploying the policies using the Azure CLI:
 
 ```powershell
-az deployment sub create --location australiaeast --template-file ./deploy/main.bicep --parameters @deploy/main.parameters.tailwindtraders-dev.json --name "tagpolicies-$((Get-Date).ToString('yyMMdd-HHmmss'))-$((New-Guid).Guid.Substring(0, 4))"
+az deployment sub create --location australiaeast --template-file ./deploy/tagPolicyInitiative.bicep --parameters @deploy/tagPolicyInitiative.parameters.tailwindtraders-dev.json --name "tagpolicies-$((Get-Date).ToString('yyMMdd-HHmmss'))-$((New-Guid).Guid.Substring(0, 4))"
 ```
 
 ### Budgets

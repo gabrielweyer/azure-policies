@@ -1,4 +1,4 @@
-# Azure policies
+# Azure policies amd budgets
 
 These policies will mark a resource as non-compliant when a required tag is missing or the tag value is invalid. I'm auditing the below tags:
 
@@ -8,13 +8,27 @@ These policies will mark a resource as non-compliant when a required tag is miss
 - `Organisation` expected to be either `Contoso` or `TailwindTraders` (depending on the subscription)
 - `Owner` expected to contain the email address of the team supporting the service
 
+Once the resources are tagged as expected we can define budgets for each `AppDomain` and `Environment`.
+
 ## Deployment
 
-Using the Azure CLI:
+### Policies
+
+Deploying the policies using the Azure CLI:
 
 ```powershell
 az deployment sub create --location australiaeast --template-file ./deploy/main.bicep --parameters @deploy/main.parameters.tailwindtraders-dev.json --name "tagpolicies-$((Get-Date).ToString('yyMMdd-HHmmss'))-$((New-Guid).Guid.Substring(0, 4))"
 ```
+
+### Budgets
+
+Deploying the budgets using the Azure CLI:
+
+```powershell
+az deployment sub create --location australiaeast --template-file ./deploy/budget.bicep --parameters @deploy/budget.parameters.dev.json --name "budgets-$((Get-Date).ToString('yyMMdd-HHmmss'))-$((New-Guid).Guid.Substring(0, 4))"
+```
+
+You'll be prompted to enter the contact email address.
 
 ## Design considerations
 

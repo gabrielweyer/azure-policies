@@ -1,4 +1,4 @@
-# Azure policies amd budgets
+# Azure policies and budgets
 
 These policies will mark a resource as non-compliant when a required tag is missing or the tag value is invalid. I'm auditing the below tags:
 
